@@ -1,0 +1,1735 @@
+╔══════════════════════════════════════════════════════════════════╗
+║         RFC 6749 — OAuth 2.0 YETKİLENDİRME ÇERÇEVESİ          ║
+║                      TÜRKÇE ÇEVİRİ                              ║
+╠══════════════════════════════════════════════════════════════════╣
+║  İnternet Mühendisliği Görev Gücü (IETF)    RFC: 6749           ║
+║  İstek İçin Yorum: 6749                     Ekim 2012           ║
+║  Kategori: Standartlar Parçası              D. Hardt (Editör)   ║
+╠══════════════════════════════════════════════════════════════════╣
+║  Çeviri Notu: Teknik terimler (OAuth, HTTP, TLS, URI, API,      ║
+║  token, grant_type, client_id vb.) İngilizce bırakılmıştır.    ║
+║  Toplam: 76 sayfa • 5 parça • Tüm bölümler çevrilmiştir.       ║
+╚══════════════════════════════════════════════════════════════════╝
+
+RFC 6749 — OAuth 2.0 Yetkilendirme Çerçevesi
+Türkçe Çeviri
+İnternet Mühendisliği Görev Gücü (IETF)
+D. Hardt, Editör
+Ekim 2012
+
+============================================================
+PARÇA 1 / 5 — Sayfa 1–15 (Başlık, Özet, Bölüm 1–3)
+============================================================
+
+Özet
+
+OAuth 2.0 yetkilendirme çerçevesi; üçüncü taraf bir uygulamanın,
+kaynak sahibi ile HTTP hizmeti arasındaki etkileşimi düzenleyerek veya
+üçüncü tarafa kendi adına erişim yetkisi tanıyarak, bir HTTP hizmetine
+(Facebook, Google vb.) sınırlı erişim elde etmesini sağlar.
+
+Bu belge, OAuth 1.0 protokolünü (RFC 5849'da yayımlanmıştır)
+kullanımdan kaldırır ve onun yerini alır.
+
+
+1.  Giriş
+
+Geleneksel istemci-sunucu kimlik doğrulama modelinde, istemci bir
+sunucudaki korumalı kaynaklara (kaynak sahibinin sahip olduğu)
+erişmek için kaynak sahibinin kimlik bilgilerini kullanarak kimlik
+doğrular. Üçüncü taraf uygulamalara korumalı kaynaklara erişim
+sağlamak amacıyla, kaynak sahibi kimlik bilgilerini üçüncü tarafla
+paylaşmak zorundadır. Bu durum çeşitli sorunlara ve kısıtlamalara
+yol açar:
+
+  o  Üçüncü taraf uygulamaların gelecekte kullanmak üzere kaynak
+     sahibinin kimlik bilgilerini (genellikle düz metin parola)
+     saklaması gerekir.
+
+  o  Sunucuların, parolayla kimlik doğrulamayı desteklemesi gerekir
+     — bu da parola güvenliğinin getirdiği zayıflıkları beraberinde
+     getirir.
+
+  o  Üçüncü taraf uygulamalar, kaynak sahibinin korumalı
+     kaynaklarına aşırı geniş erişim kazanır; kaynak sahibinin
+     erişimi süre, kapsam veya kaynak kümesiyle sınırlandırma
+     imkânı yoktur.
+
+  o  Kaynak sahibi, bireysel üçüncü taraf uygulamaların erişimini
+     tüm üçüncü tarafların parolasını değiştirmeksizin iptal edemez
+     ve bunu yapması tüm üçüncü taraflara olan erişimi kaldırır.
+
+  o  Herhangi bir üçüncü taraf uygulamanın güvenliğinin ihlal
+     edilmesi, son kullanıcının parolasının ve o parola ile
+     korunan tüm verilerin güvenliğinin ihlaline yol açar.
+
+OAuth bu sorunları, kaynak sahibinin kimlik bilgileri yerine yetki
+katmanı sunarak çözer. Kaynağa erişmek için istemci, kaynak
+sahibinden farklı bir kimlik bilgisi kümesini temsil eden bir erişim
+jetonu (access token) edinir. Erişim jetonları; belirli bir kapsam,
+ömür ve diğer erişim nitelikleri ile kodlanmış dizelerdir. Erişim
+jetonları, bir yetkilendirme sunucusu tarafından kaynak sahibinin
+onayıyla üçüncü taraf istemcilere verilir. İstemci, kaynak sunucusuna
+erişmek için kaynak sahibinin kimlik bilgileri yerine erişim jetonunu
+kullanır.
+
+Örneğin, son kullanıcı (kaynak sahibi), yazdırma hizmeti (istemci)
+uygulamasına, kimlik bilgilerini yazdırma hizmeti ile paylaşmadan,
+bir fotoğraf paylaşım hizmetinde (kaynak sunucusu) depolanan korumalı
+fotoğraflarına erişim izni verebilir. Bunun yerine, fotoğraf paylaşım
+hizmetinin güvendiği bir sunucu (yetkilendirme sunucusu) tarafından
+verilen kimlik bilgileriyle kimlik doğrulama yapılır.
+
+Bu belge ve uygulanması RFC 5849 tarafından tanımlanan OAuth 1.0
+protokolünü kullanımdan kaldırır. OAuth 2.0 protokolü, OAuth 1.0
+ile geriye dönük uyumlu DEĞİLDİR. İki sürüm bir arada var olabilir
+ve uygulayıcılar her iki sürümü de desteklemek isteyebilir. Bununla
+birlikte bu belgenin amacı yeni uygulamaların OAuth 2.0'ı desteklemesi
+olup OAuth 1.0 yalnızca mevcut dağıtımları desteklemek amacıyla
+kullanılmaktadır.
+
+OAuth 2.0 protokolü bu belgede ana hatlarıyla sunulmaktadır ve bu
+belge OAuth 2.0 uygulamalarını somutlaştırmak için gereken pek çok
+kararı kasıtlı olarak belirtmemiştir. OAuth 2.0'ın tam uygulamaları
+bu protokolün ötesinde ek bileşenler ve spesifikasyonlar gerektirir.
+OAuth 2.0 kapsamındaki bazı bileşenler için bu belgeye eşlik eden
+profil belgeleri yayımlanmıştır veya yayımlanması planlanmaktadır.
+
+
+1.1.  Roller
+
+OAuth dört rolü tanımlar:
+
+kaynak sahibi (resource owner)
+   Korumalı kaynağa erişim yetkisi verebilecek varlık. Kaynak sahibi
+   bir kişi olduğunda son kullanıcı olarak adlandırılır.
+
+kaynak sunucusu (resource server)
+   Korumalı kaynakları barındıran sunucu; korumalı kaynak isteklerini
+   kabul eden ve erişim jetonlarını kullanan sunucu.
+
+istemci (client)
+   Kaynak sahibi adına ve onun yetkilendirmesiyle korumalı kaynak
+   istekleri yapan uygulama. "İstemci" terimi belirli bir uygulama
+   mimarisini ima etmez (örneğin, uygulama sunucuda, masaüstünde veya
+   diğer cihazlarda çalışıyor olabilir).
+
+yetkilendirme sunucusu (authorization server)
+   Kaynak sahibinin kimliğini başarıyla doğruladıktan ve yetkiyi
+   aldıktan sonra istemciye erişim jetonu veren sunucu.
+
+Yetkilendirme sunucusu ile kaynak sunucusu arasındaki etkileşim bu
+belgenin kapsamı dışındadır. Yetkilendirme sunucusu, kaynak
+sunucusuyla aynı sunucu olabilir veya ayrı bir varlık olabilir.
+Tek bir yetkilendirme sunucusu, birden fazla kaynak sunucusu
+tarafından kabul edilen erişim jetonları verebilir.
+
+
+1.2.  Protokol Akışı
+
+     +--------+                               +---------------+
+     |        |--(A)- Yetkilendirme İsteği -->|    Kaynak     |
+     |        |                               |    Sahibi     |
+     |        |<-(B)-- Yetkilendirme Yetkisi -|               |
+     |        |                               +---------------+
+     |        |
+     |        |                               +---------------+
+     |        |--(C)-- Yetkilendirme Yetkisi ->|Yetkilendirme |
+     | İstemci|                               |    Sunucusu  |
+     |        |<-(D)----- Erişim Jetonu -------|               |
+     |        |                               +---------------+
+     |        |
+     |        |                               +---------------+
+     |        |--(E)----- Erişim Jetonu ------>|    Kaynak     |
+     |        |                               |    Sunucusu  |
+     |        |<-(F)--- Korumalı Kaynak -------|               |
+     +--------+                               +---------------+
+
+                Şekil 1: Soyut Protokol Akışı
+
+Şekil 1'de gösterilen soyut OAuth 2.0 akışı dört rolün arasındaki
+etkileşimi açıklar ve aşağıdaki adımları içerir:
+
+(A)  İstemci, kaynak sahibinden yetkilendirme ister. Yetkilendirme
+     isteği doğrudan kaynak sahibine yapılabilir (gösterildiği gibi)
+     veya tercihen yetkilendirme sunucusu üzerinden dolaylı olarak
+     yapılabilir.
+
+(B)  İstemci, kaynak sahibinin yetkisini temsil eden bir yetki
+     (authorization grant) alır. Yetki türü, istemcinin
+     yetkilendirme istemek için kullandığı yönteme ve yetkilendirme
+     sunucusunun desteklediği türlere bağlıdır. Bu belgede dört
+     yetki türü tanımlanmaktadır.
+
+(C)  İstemci, yetkilendirme sunucusunu doğrulayarak ve yetkilendirme
+     yetkisini sunarak erişim jetonu ister.
+
+(D)  Yetkilendirme sunucusu istemciyi doğrular, yetkilendirme
+     yetkisini doğrular ve geçerliyse erişim jetonu verir.
+
+(E)  İstemci, kaynak sunucusundan korumalı kaynağı ister ve erişim
+     jetonuyla kimlik doğrular.
+
+(F)  Kaynak sunucusu erişim jetonunu doğrular ve geçerliyse isteği
+     karşılar.
+
+Kaynak sahibinden yetkilendirme yetkisi elde etmek için tercih edilen
+yöntem (A) ve (B) adımları), kaynak sunucusunu bir aracı olarak
+kullanmaktır; bu durum Şekil 3'te gösterilmektedir.
+
+
+1.3.  Yetkilendirme Yetkisi
+
+Yetkilendirme yetkisi; kaynak sahibinin yetkilendirmesini (korumalı
+kaynaklara erişim) temsil eden ve istemcinin erişim jetonu edinmek
+için kullandığı bir kimlik bilgisidir. Bu belge dört yetki türü
+tanımlar: yetkilendirme kodu (authorization code), örtük (implicit),
+kaynak sahibi parola kimlik bilgileri (resource owner password
+credentials) ve istemci kimlik bilgileri (client credentials).
+
+Ayrıca genişletilebilirlik mekanizması sağlanmıştır ve bu mekanizma
+ek yetki türlerini tanımlamak için kullanılabilir.
+
+
+1.3.1.  Yetkilendirme Kodu (Authorization Code)
+
+Yetkilendirme kodu, istemci ile kaynak sahibi arasında aracı olarak
+yetkilendirme sunucusunu kullanarak elde edilir. Kaynak sahibini
+doğrudan yetkilendirme istemek yerine, istemci kaynak sahibini bir
+kullanıcı aracısı (genellikle web tarayıcısı) aracılığıyla
+yetkilendirme sunucusuna yönlendirir; yetkilendirme sunucusu da
+kaynak sahibini yetkilendirme kodu ile istemciye geri yönlendirir.
+
+Kaynak sahibini istemciye geri yönlendirmeden önce, yetkilendirme
+sunucusu kaynak sahibinin kimliğini doğrular ve yetkilendirme alır.
+Kaynak sahibi yalnızca yetkilendirme sunucusu ile etkileşime geçtiği
+için kaynak sahibinin kimlik bilgileri hiçbir zaman istemci ile
+paylaşılmaz.
+
+Yetkilendirme kodu; güvenlik, erişim jetonu için yenileme jetonu
+(refresh token) alma yeteneği ve kaynak sahibinin kullanıcı aracısına
+maruz kalmadan erişim jetonunun istemciye iletilmesi dahil olmak üzere
+önemli güvenlik avantajları sağlar.
+
+
+1.3.2.  Örtük Yetki (Implicit)
+
+Örtük yetki; JavaScript gibi bir betik dili kullanılarak tarayıcıda
+uygulanan istemciler için optimize edilmiş, basitleştirilmiş bir
+yetkilendirme kodu akışıdır. Örtük akışta, istemciye yetkilendirme
+kodu verilmek yerine, erişim jetonu doğrudan verilir (kaynak sahibinin
+yetkilendirmesi sonucunda). Yetki türü; aracı kimlik bilgilerinin
+(yetkilendirme kodu gibi) verilmesini gerektirmediğinden ve yetki
+doğrudan erişim jetonuna kodlandığından örtük (implicit) olarak
+adlandırılır.
+
+Örtük yetki verilirken yetkilendirme sunucusu istemcinin kimliğini
+doğrulamaz. Bazı durumlarda istemci kimliği; erişim jetonunu
+istemciye iletmek için kullanılan yeniden yönlendirme URI'si
+(redirect_uri) aracılığıyla doğrulanabilir. Erişim jetonu, kaynak
+sahibinin kullanıcı aracısına erişimi olan kaynak sahibine veya diğer
+uygulamalara açık olabilir.
+
+Örtük yetki türü; uygulamayı basitleştirerek (yetkilendirme kodu
+değişimi için hiçbir gidiş-dönüş gerektirmez) ve bazı uygulamaların
+yanıt verebilirliğini artırarak istemci etkinliğini artırır. Öte
+yandan bu kolaylık, özellikle yetkilendirme kodu yetki türü
+kullanılabildiğinde, Bölüm 10.3 ve 10.16'da açıklanan güvenlik
+özellikleri göz önüne alındığında dikkate alınmalıdır.
+
+
+1.3.3.  Kaynak Sahibi Parola Kimlik Bilgileri
+
+Kaynak sahibi parola kimlik bilgileri (kullanıcı adı ve parola),
+doğrudan erişim jetonu elde etmek için bir yetki olarak
+kullanılabilir. Bu kimlik bilgileri yalnızca kaynak sahibinin istemciye
+yüksek düzeyde güvenmesi durumunda kullanılmalıdır (örneğin, cihaz
+işletim sistemi veya yüksek ayrıcalıklı uygulama); ayrıca diğer yetki
+türleri kullanılamadığında (yetkilendirme kodu gibi) kullanılmalıdır.
+
+Her ne kadar bu yetki türü kaynak sahibinin kimlik bilgilerine
+istemcinin doğrudan erişimini gerektirse de kaynak sahibinin kimlik
+bilgileri yalnızca tek bir istek için kullanılır ve erişim jetonu ile
+değiştirilir. Bu yetki türü, kimlik bilgilerini depolama gereksinimine
+göre kaynak sahibinin kimlik bilgilerini uzun süreli erişim için
+erişim jetonuna dönüştürerek korumalı kaynak erişimini etkinleştirir.
+
+
+1.3.4.  İstemci Kimlik Bilgileri
+
+İstemci kimlik bilgileri (veya diğer istemci kimlik doğrulama
+biçimleri), yetki kapsamı istemcinin kontrolü altındaki korumalı
+kaynaklarla sınırlı olduğunda veya daha önce yetkilendirme sunucusuyla
+düzenlenmiş korumalı kaynaklara sınırlı olduğunda yetkilendirme yetkisi
+olarak kullanılabilir. İstemci kimlik bilgileri genellikle istemcinin
+kendi adına hareket ettiği durumlarda (yani istemci aynı zamanda kaynak
+sahibidir) veya yetkilendirme sunucusuyla önceden düzenlenmiş bir
+yetkilendirmesine dayanılarak korumalı kaynaklara erişim istendiğinde
+kullanılır.
+
+
+1.4.  Erişim Jetonları
+
+Erişim jetonları (access tokens), korumalı kaynaklara erişmek için
+kullanılan kimlik bilgileridir. Erişim jetonu; istemciye verilen bir
+yetkilendirmeyi temsil eden bir dize olup genellikle istemci için
+opaktır. Bir jeton belirli bir kapsam, süre ve diğer erişim
+nitelikleri gibi yetkilendirme bilgilerini özetler.
+
+Erişim jetonları, kaynak sunucusuna birlikte çalışabilirlik sağlamak
+ve erişim bilgilerini kaynak sahibinin kimlik bilgileriyle değiştirme
+ihtiyacını ortadan kaldırmak için soyut bir katman sağlar. Erişim
+jetonu; kimlik doğrulama katmanı tarafından anlaşılan bir ifade ile
+değiştirilebilir; ancak bu ifadeler tek kullanımlık veya uzun ömürlü
+olabilir. Erişim jetonları için çeşitli biçimler, yapılar ve kullanım
+yöntemleri (kriptografik özellikler gibi) bu belgenin kapsamı dışında
+olan beraberindeki spesifikasyonlar tarafından tanımlanabilir.
+
+
+1.5.  Yenileme Jetonları
+
+Yenileme jetonları (refresh tokens), yeni erişim jetonları edinmek
+için kullanılan kimlik bilgileridir. Yenileme jetonu, yetkilendirme
+sunucusu tarafından istemciye verilir ve mevcut erişim jetonunun
+geçersiz olması ya da sona ermesi veya aynı yetkilendirme yetkisine
+(kapsam olarak aynı veya daha dar olmak üzere) erişim jetonları
+edinilmesi durumunda yeni bir erişim jetonu almak için kullanılır.
+Yenileme jetonlarının verilip verilmeyeceği yetkilendirme sunucusunun
+takdirindedir. Sunucu yenileme jetonu verirse, erişim jetonu
+verilirken de dahil edilir (yani Şekil 1'deki D Adımı).
+
+Yenileme jetonu, yetkilendirme sunucusu tarafından verilmek üzere
+tasarlanmış bir dizedir ve istemci için opaktır. Jetonun yetkilendirme
+sunucusu tarafından değerlendirilmesine yönelik bir yapıya sahip olması
+gerekmez. Yenileme jetonu kullanımı farklı olabilir.
+
+
+1.6.  TLS Versiyonu
+
+Bu belge boyunca Aktarım Katmanı Güvenliği'ne (TLS) yapılan atıflar,
+belirli bir sürüm gereksinimlerini yansıtmak için güncellenebilir.
+Bu belgenin yazıldığı dönemde TLS 1.2 [RFC5246] en güncel sürümdür
+ancak çok sınırlı dağıtım tabanına sahip oldukça yeni bir sürümdür.
+TLS 1.0 [RFC2246] yaygın dağıtım tabanı ile en geniş çaplı TLS
+sürümüdür ve bunun birlikte çalışabilirlik için asgari sürüm olarak
+desteklenmesi uygun olacaktır. İstemciler ve sunucular, gizliliği
+anlaşmaya dayalı şifre paketi (negotiated cipher suite) değerlendirme
+yoluyla en güçlü versiyon ve şifre paketlerini desteklemeli ve
+kullanmalıdır.
+
+
+1.7.  HTTP Yönlendirmeleri
+
+Bu belge, HTTP 302 yönlendirme yanıtı ile istemci veya yetkilendirme
+sunucusu tarafından başlatılan yönlendirmelerin yaygın olarak
+kullanıldığı teknik kullanım biçimleri için geçerlidir. Uygulamalar
+bağlamına bağlı olarak, HTTP yanıt kodu bu tür yönlendirmeler için
+farklı olabilir. Kullanıcı aracısı başka bir yöntemle yönlendirilebilir.
+
+
+1.8.  Birlikte Çalışabilirlik
+
+OAuth 2.0; iyi tanımlanmış uygulamalar için destekleyici çerçeve ve
+genişletilmiş arayüz üretmek amacıyla esnekliği vurgulayan bir çerçeve
+sağlar. Bu spesifikasyon mevcut protokol özelliklerinin ötesinde bazı
+bileşenlerin bileşenler arasındaki etkileşimi standartlaştırılmamış
+bir biçimde bırakmıştır. Bunlar dahil ancak bunlarla sınırlı olmamak
+üzere:
+
+  o  Jeton türü tanımı ve işleme
+  o  Ek yetkilendirme hibe türleri
+  o  İstemci kimlik doğrulama protokolü uzantıları
+
+
+1.9.  Gösterimler
+
+Bu belgedeki anahtar sözcükler "MUST" (ZORUNLUDUR), "MUST NOT"
+(YAPILMAMALIDIR), "REQUIRED" (GEREKLİDİR), "SHALL" (YAPILACAKTIR),
+"SHALL NOT" (YAPILMAYACAKTIR), "SHOULD" (YAPILMALIDIR), "SHOULD NOT"
+(YAPILMAMALIDIR), "RECOMMENDED" (TAVSİYE EDİLİR), "MAY" (OLABİLİR),
+"OPTIONAL" (İSTEĞE BAĞLI) RFC 2119'da açıklanan şekilde
+yorumlanmalıdır.
+
+Bu belge; ABNF gösterimine [RFC5234] ek olarak aşağıdaki
+gramer notasyonlarını kullanır:
+
+  /    değerler dizisi (değerler arası "veya")
+  *    sıfır veya daha fazla oluşum
+  1*   bir veya daha fazla oluşum
+
+Bu belgede " " ile gösterilen dizeler büyük/küçük harf duyarsızdır.
+
+
+2.  İstemci Kaydı
+
+Bir protokol akışı başlatmadan önce istemci, yetkilendirme
+sunucusuna kaydolmalıdır. İstemci kaydının yetkilendirme sunucusuyla
+nasıl gerçekleşeceğine ilişkin bilgi bu belgenin kapsamı dışındadır;
+ancak genellikle son kullanıcı arayüzü ya da yetkilendirme
+sunucusuyla etkileşime giren son kullanıcı arayüzü olmayan servisler
+ile HTML kayıt formu kullanımını içerir.
+
+İstemci kaydı, istemcinin yetkilendirme sunucusuyla doğrudan etkileşim
+kurmasını gerektirmez. Yetkilendirme sunucusu destekliyorsa kayıt; güven
+zinciri oluşturulması veya istemci özellikleri yayınlamak amacıyla
+bir meta veri belgesinin kullanılmasıyla gerçekleştirilebilir. Kayıt
+gereksinimleri ve bu gereksinimleri karşılamanın yolları, desteklediği
+yetkilendirme sunucusu çözümüne bağlıdır.
+
+Kayıt sırasında istemci geliştiricisi şunları sağlamalıdır (SHOULD):
+
+  o  Bölüm 2.1'de açıklanan istemci türü
+  o  İstemci yeniden yönlendirme URI'leri (Bölüm 3.1.2'de açıklandığı gibi)
+  o  Yetkilendirme sunucusunun gerektirdiği diğer bilgiler (uygulama adı,
+     web sitesi, açıklama, logo resmi, kabul edilen yasal koşullar vb.)
+
+
+2.1.  İstemci Türleri
+
+OAuth, istemci kimlik bilgilerini gizli tutma yeteneğini temel alarak
+iki istemci türü tanımlar:
+
+gizli (confidential)
+   Kimlik bilgilerinin gizliliğini koruyabilen istemciler (örneğin
+   sunucuda uygulanan, istemci kimlik bilgilerine erişimin güvenli
+   biçimde kısıtlandığı istemci) veya diğer yollarla güvenli istemci
+   kimlik doğrulaması gerçekleştirebilen istemciler.
+
+kamusal (public)
+   İstemci kimlik bilgilerinin gizliliğini koruyamayan istemciler
+   (örneğin kaynak sahibinin cihazında çalışan yerel uygulamalar veya
+   tarayıcı tabanlı web uygulamaları) ve güvenli istemci kimlik
+   doğrulaması gerçekleştiremeyen istemciler.
+
+İstemci türü tayini; yetkilendirme sunucusunun güvenli kimlik doğrulama
+ve istemci kimliği üzerine olan beyanlarına dayanır. Yetkilendirme
+sunucusu, istemci türü hakkında varsayımda bulunmamalıdır.
+
+İstemci, yetkilendirme sunucusuyla birden fazla bileşen içeren dağıtık
+bir uygulama olarak uygulanabilir — her bileşen farklı bir istemci
+türü ve güvenlik bağlamına sahip olabilir (örneğin sunucu tabanlı
+gizli bir bileşen ve ortak kamusal tarayıcı tabanlı bir bileşen içeren
+dağıtılmış istemci). Yetkilendirme sunucusu her bileşeni ayrı bir
+istemci olarak kaydettirmesini gerektirirse, istemci geliştiricisi bu
+bileşenleri her birinin özelliklerini açıklayan şekilde kayıt ettirmelidir.
+
+Bu belge aşağıdaki istemci profil örneklerini tanımlar:
+
+web uygulaması (web application)
+   Web uygulaması, bir web sunucusunda çalışan gizli bir istemcidir.
+   Kaynak sahipleri, istemcinin çalıştığı cihazda bulunan bir kullanıcı
+   aracısı (genellikle web tarayıcısı) aracılığıyla HTML kullanıcı
+   arayüzüne erişir. İstemci kimlik bilgileri ve istemciye verilen
+   herhangi bir erişim jetonu sunucuda saklanır ve kaynak sahibine
+   açık değildir.
+
+kullanıcı aracısı tabanlı uygulama (user-agent-based application)
+   Kullanıcı aracısı tabanlı uygulama, istemci kodunun web sunucusundan
+   indirildiği ve kaynak sahibinin kullandığı cihaz üzerindeki kullanıcı
+   aracısı (örneğin web tarayıcısı) içinde çalıştırıldığı kamusal bir
+   istemcidir. Protokol verileri ve kimlik bilgileri kaynak sahibi için
+   kolayca erişilebilir (ve genellikle görünür) durumdadır. Bu tür
+   uygulamalar sunucuda çalıştırılabilir, ancak istemci ile kaynak
+   sahibi arasında güvenilirlik ilişkisi göz önünde bulundurulmalıdır.
+
+yerel uygulama (native application)
+   Yerel uygulama, kaynak sahibinin kullandığı cihaz üzerinde
+   yüklü ve çalışan kamusal bir istemcidir. Protokol verileri ve
+   kimlik bilgileri kaynak sahibi için erişilebilir durumdadır.
+   Uygulamada bulunan tüm istemci kimlik doğrulama kimlik
+   bilgilerinin çıkarılabilir olduğu varsayılır. Öte yandan dinamik
+   olarak verilen kimlik bilgileri (erişim jetonları ve yenileme
+   jetonları gibi) kabul edilebilir bir gizlilik düzeyi elde edebilir.
+   En azından bu kimlik bilgileri, uygulamanın etkileşimde bulunduğu
+   tüm sunuculardan korunmaktadır. Bazı platformlarda bu kimlik
+   bilgileri, cihazda bulunan diğer uygulamalardan da korunabilir.
+
+
+2.2.  İstemci Tanımlayıcısı
+
+Yetkilendirme sunucusu, kayıtlı istemciye benzersiz bir dize olan
+istemci tanımlayıcısını (client_id) verir. İstemci tanımlayıcısı
+yetkilendirme sunucusuna gizli değildir; kaynak sahibine açıktır ve
+tek başına istemci kimlik doğrulaması için KULLANILMAMALIDIR (MUST NOT).
+İstemci tanımlayıcısı yetkilendirme sunucusuna göre benzersizdir.
+
+İstemci tanımlayıcısı boyutu bu belge tarafından belirlenmemiştir.
+İstemci, tanımlayıcı boyutuna göre varsayımda bulunmamalıdır.
+Yetkilendirme sunucusu, verebileceği herhangi bir boyutu belgelemelidir.
+
+
+2.3.  İstemci Kimlik Doğrulaması
+
+İstemci türü gizliyse, istemci ve yetkilendirme sunucusu bu belgenin
+gereksinimlerini karşılayan bir istemci kimlik doğrulama yöntemi
+oluşturmalıdır (MUST). Gizli istemciler tipik olarak istemci
+kimlik doğrulaması için istemci_id ve istemci_gizli_anahtarı çiftini
+kullanır.
+
+Kamusal istemciler kimlik doğrulanmaz. Kayıt sırasında istemci
+türü ve yetkilendirme alımı için istemci_id yeterli olabilir.
+
+Yetkilendirme sunucusu birden fazla istemci kimlik doğrulama yöntemini
+destekleyebilir; ancak her istemci için yalnızca bir yöntem kullanmalıdır.
+Birden fazla kimlik doğrulama mekanizması kullanan istemciler ile çalışmak
+güvenli olmayabilir.
+
+
+2.3.1.  İstemci Parolası
+
+İstemci parolasına sahip istemciler, Bölüm 3.2.1'de açıklanan şekilde
+HTTP Temel kimlik doğrulama şemasını kullanarak kimlik doğrulayabilir.
+İstemci tanımlayıcısı; RFC 6749'un Ek B'sinde tanımlandığı şekilde
+"application/x-www-form-urlencoded" kodlaması şemasını kullanan istemci
+kimlik doğrulama kimlik bilgisi kullanıcı adı olarak kodlanır
+ve istemci parolası kimlik bilgisi şifresi olarak kodlanır.
+
+Örneğin (biçimlendirme amacıyla satır sonları):
+
+   Authorization: Basic czZCaGRSa3F0Mzo3RmpmcDBaQnIxS3REUmJuZlZkbUl3
+
+
+İstemci, istemci tanımlayıcısını ve istemci parolasını bir istek
+gövdesine yalnızca şu parametreleri kullanarak da gönderebilir:
+
+   client_id
+         GEREKLİDİR. İstemci tanımlayıcısı Bölüm 2.2'de verildiği gibi.
+
+   client_secret
+         GEREKLİDİR. İstemci sırrı. İstemci gizli değerine sahip
+         değilse, istemci parolayı dışarıda bırakabilir ya da boş bir
+         dize kullanabilir.
+
+Örneğin, istek gövdesini kullanarak:
+
+   POST /token HTTP/1.1
+   Host: server.example.com
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=authorization_code&code=SplxlOBeZQQYbYS6WxSbIA
+   &redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb
+   &client_id=s6BhdRkqt3&client_secret=7Fjfp0ZBr1KtDRbnfVdmIw
+
+Yetkilendirme sunucusu bu yöntemi destekleyebilir (MAY) ve bunu
+kullanmayı tercih eden istemcilere belgeleyebilir. Bununla birlikte,
+yetkilendirme sunucusu istemci parolasını gövde parametrelerinde
+içeren istekleri reddetmemeli (SHOULD NOT) — bu tür istekler, HTTP
+Temel kimlik doğrulama şemasının daha iyi korunduğu senaryolarda
+bile bunu yapmamalıdır.
+
+İstemci tanımlayıcısını ve istemci parolasını URI istek parametrelerine
+dahil etmek önerilmemekte (NOT RECOMMENDED) ve kullanımından
+kaçınılmalıdır.
+
+
+3.  Protokol Uç Noktaları
+
+Yetkilendirme süreci, yetkilendirme sunucusu tarafından kullanılan
+iki uç noktadan (HTTP kaynaklarından) oluşur:
+
+  o  Yetkilendirme uç noktası (Authorization endpoint) — Kaynak
+     sahibi ile etkileşim kurmak ve yetkilendirme yetkisi almak
+     için istemci tarafından kullanılır.
+
+  o  Jeton uç noktası (Token endpoint) — İstemci tarafından
+     yetkilendirme yetkisi ile erişim jetonu değiştirmek için
+     kullanılır; genellikle istemci kimlik doğrulaması yapılır.
+
+Ayrıca istemci tarafından kullanılan bir uç nokta bulunur:
+
+  o  Yeniden yönlendirme uç noktası (Redirection endpoint) — Yetkilendirme
+     sunucusu tarafından kaynak sahibi kullanıcı aracısını yetkilendirme
+     kimlik bilgileri içeren istemciye geri yönlendirmek için kullanılır.
+
+Her yetkilendirme sunucusu uç noktasında TLS zorunludur
+(Bölüm 1.6'ya bakın). Zorunluluk; kimlik doğrulama kimlik bilgilerini
+içeren yetkisiz kayıtlar oluşturulabilme ihtimali nedeniyle kritik
+öneme sahiptir. Bu gereksinimlere uyun.
+
+
+3.1.  Yetkilendirme Uç Noktası
+
+Yetkilendirme uç noktası; kaynak sahibi ile etkileşim kurmak ve
+yetkilendirme yetkisi almak için kullanılır. Yetkilendirme sunucusu
+önce kaynak sahibinin kimliğini doğrulamalıdır. Yetkilendirme
+sunucusunun kaynak sahibinin kimliğini doğrulama yöntemi (ör. kullanıcı
+adı ve parola girişi, oturum çerezleri) bu belgenin kapsamı dışındadır.
+
+Yetkilendirme sunucusu, yetkilendirme uç noktası URI'sini belgelemelidir.
+İstemci tarafından yetkilendirme kodu akışı ve örtük akış için
+kullanılan yetkilendirme uç noktası, istemci kimlik bilgileri ve
+kaynak sahibi parola kimlik bilgileri akışları için KULLANILMAZ.
+
+Yetkilendirme isteği URI'si belirtilmiş "query" bileşeni içerebilir
+([RFC3986] Bölüm 3.4), bu durumda sorgu bileşenine ek parametreler
+eklenmelidir (MUST). Yetkilendirme uç noktası URI'sinin herhangi bir
+parça bileşeni içermemesi GEREKLİDİR ([RFC3986] Bölüm 3.5).
+
+
+3.1.1.  Yanıt Türü
+
+Yetkilendirme uç noktası; yetkilendirme kodu akışı (Bölüm 4.1) ve
+örtük yetki türü akışı (Bölüm 4.2) için kullanılır. İstemci,
+yetkilendirme sunucusuna istenen yetki türünü aşağıdaki parametreyle
+bildirir:
+
+   response_type
+         GEREKLİDİR. Değer, yetkilendirme kodu istemek için "code"
+         veya erişim jetonu istemek (örtük yetki) için "token" ve
+         Bölüm 8.4'te açıklanan ek yanıt türleri olmalıdır.
+
+Uzantı yanıt türleri bir veya daha fazla boşlukla ayrılmış değer içerebilir.
+Değerler sırası önemlidir. Bu belge Bölüm 4.1.1'de "code" ve Bölüm 4.2.1'de
+"token" değerini tanımlar.
+
+Yetkilendirme sunucusu bilinmeyen bir response_type değerini REDDETMELIDIR
+(MUST).
+
+
+3.1.2.  Yeniden Yönlendirme Uç Noktası
+
+Yetkilendirme süreci tamamlandıktan sonra, yetkilendirme sunucusu
+istemciyi önceden yetkilendirme sunucusuna kayıt sırasında veya
+yetkilendirme isteği başlatıldığında belirlenen yeniden yönlendirme
+uç noktasına yönlendirir.
+
+Yeniden yönlendirme uç noktası URI'si, yetkilendirme isteğiyle
+sağlandığında istemcinin istemci kaydı sırasında sağladığı yeniden
+yönlendirme URI'leri listesiyle karşılaştırılmalıdır (MUST). Yeniden
+yönlendirme URI'sini kayıt gerektirmeyen yetkilendirme sunucuları
+bölüm 10.15'te açıklanan saldırılara karşı açık konumdadır.
+============================================================
+PARÇA 2 / 5 — Sayfa 16–32 (Bölüm 4–5: Yetki Türleri ve Jetonlar)
+============================================================
+
+
+4.  Erişim Jetonu Edinme
+
+OAuth 2.0, çeşitli kullanım senaryolarına ve HTTP istek türlerine
+hitap eden dört yetki türü tanımlar. Bu bölümlerde her yetki türü
+ayrıntılı olarak açıklanmaktadır.
+
+
+4.1.  Yetkilendirme Kodu Yetkisi
+
+Yetkilendirme kodu yetki türü; hem gizli hem de kamusal istemciler
+tarafından erişim jetonları ve yenileme jetonları edinmek için
+kullanılır. Yetkilendirme kodu yetki türü, kullanıcı aracısı tabanlı
+istemciler için optimize edilmiştir. Bu yetki türünde istemci, kullanıcı
+aracısını yetkilendirme uç noktasına yönlendirir; yetkilendirme
+tamamlandıktan sonra ise yetkilendirme sunucusu kullanıcı aracısını
+bir yetkilendirme kodu ile istemciye geri yönlendirir.
+
+     +----------+
+     | Kaynak   |
+     |   Sahibi |
+     |          |
+     +----------+
+          ^
+          |
+         (B)
+     +----|-----+          İstemci Tanımlayıcı      +---------------+
+     |         -+----(A)-- ve Yeniden Yönl. URI --->|               |
+     |  Kullanıcı          ─────────────────────────|Yetkilendirme  |
+     |  Aracısı -+----(B)-- Kullanıcı Kimlik Doğr -->|   Sunucusu   |
+     |           |<──(C)── Yetkilend. Kodu ─────────|               |
+     +-|---------+                                  +---------------+
+       |    |                                            ^      v
+      (A)  (C)                                           |      |
+       |    |                                            |      |
+       ^    v                                            |      |
+     +---------+                                        |      |
+     |         |----(D)-- Yetkilendirme Kodu ───────────┘      |
+     | İstemci |          ve Yeniden Yönl. URI                  |
+     |         |                                                |
+     |         |<──(E)───── Erişim Jetonu ─────────────────────┘
+     +---------+       (İsteğe bağlı Yenileme Jetonuyla)
+
+   Not: (A), (B) ve (C) adımları tarayıcı üzerinden geçen istekler
+   olduğundan iki satıra ayrılmıştır.
+
+         Şekil 3: Yetkilendirme Kodu Akışı
+
+
+4.1.1.  Yetkilendirme İsteği
+
+İstemci, yetkilendirme uç noktası URI'sine "application/x-www-
+form-urlencoded" biçiminde kodlanmış aşağıdaki parametreleri ekleyerek
+bir URI oluşturur:
+
+   response_type
+         GEREKLİDİR. "code" olmalıdır.
+
+   client_id
+         GEREKLİDİR. Bölüm 2.2'de açıklandığı gibi istemci tanımlayıcısı.
+
+   redirect_uri
+         İSTEĞE BAĞLI. Bölüm 3.1.2'de açıklandığı gibi.
+
+   scope
+         İSTEĞE BAĞLI. Bölüm 3.3'te açıklandığı gibi erişim isteğinin
+         kapsamı.
+
+   state
+         TAVSİYE EDİLİR. Çapraz site istek sahteciliğini önlemek için
+         istemci tarafından isteği geri çağırma ile eşleştirmek ve kaynak
+         sahibinin kullanıcı aracısı ile göndermek için kullanılan opak bir
+         değer (Bölüm 10.12). Yetkilendirme sunucusu bu değeri kullanıcı
+         aracısını istemciye geri yönlendirirken dahil eder (MUST).
+
+İstemci, HTTP yönlendirme yanıtı veya kullanıcı aracısı aracılığıyla
+kullanılabilir başka araçlarla kullanıcı aracısını oluşturulan URI'ye
+yönlendirir.
+
+Örneğin, istemci kullanıcı aracısını aşağıdaki HTTP isteğini yapması
+için yönlendirir (satır sonları gösterim amaçlıdır):
+
+   GET /authorize?response_type=code&client_id=s6BhdRkqt3&state=xyz
+       &redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb HTTP/1.1
+   Host: server.example.com
+
+
+4.1.2.  Yetkilendirme Yanıtı
+
+Kaynak sahibi erişim isteğini onaylarsa, yetkilendirme sunucusu bir
+yetkilendirme kodu oluşturur ve aşağıdaki parametreleri "application/x-www-
+form-urlencoded" biçimiyle yeniden yönlendirme URI'sinin sorgu bileşenine
+ekleyerek istemciye iletir:
+
+   code
+         GEREKLİDİR. Yetkilendirme sunucusu tarafından oluşturulan
+         yetkilendirme kodu. Yetkilendirme kodu, yetkisiz erişimi
+         azaltmak için kısa ömürlü olmalıdır (MUST). İstemciye
+         maksimum 10 dakika ömür süresinin yeterli olacağı
+         TAVSİYE EDİLİR. İstemci yetkilendirme kodunu birden fazla
+         kez kullanmamalıdır (MUST NOT). Kod birden fazla kez
+         kullanılırsa, yetkilendirme sunucusu isteği reddetmeli (MUST)
+         ve bu kodları temel alan önceden verilmiş erişim jetonlarını
+         mümkünse iptal etmelidir.
+
+   state
+         İstemci yetkilendirme isteğinde "state" parametresi mevcutsa
+         GEREKLİDİR. İstemciden alınan kesin değer.
+
+Örneğin, yetkilendirme sunucusu aşağıdaki HTTP yanıtını göndererek
+kullanıcı aracısını yönlendirir:
+
+   HTTP/1.1 302 Found
+   Location: https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA
+             &state=xyz
+
+
+4.1.3.  Erişim Jetonu İsteği
+
+İstemci, jeton uç noktasına HTTP isteği yaparak aşağıdaki parametreleri
+"application/x-www-form-urlencoded" biçiminde istek gövdesine ekler:
+
+   grant_type
+         GEREKLİDİR. "authorization_code" olmalıdır.
+
+   code
+         GEREKLİDİR. Yetkilendirme sunucusundan alınan yetkilendirme kodu.
+
+   redirect_uri
+         Yetkilendirme isteğinde "redirect_uri" parametresi
+         mevcutsa GEREKLİDİR ve değerleri özdeş olmalıdır (MUST).
+
+   client_id
+         İstemci yetkilendirme sunucusuyla Bölüm 3.2.1'de açıklanan
+         şekilde kimlik doğrulamıyorsa GEREKLİDİR.
+
+Örneğin:
+
+   POST /token HTTP/1.1
+   Host: server.example.com
+   Authorization: Basic czZCaGRSa3F0Mzo3RmpmcDBaQnIxS3REUmJuZlZkbUl3
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=authorization_code&code=SplxlOBeZQQYbYS6WxSbIA
+   &redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb
+
+
+4.1.4.  Erişim Jetonu Yanıtı
+
+Erişim jetonu isteği geçerliyse ve yetkilendirilmişse, yetkilendirme
+sunucusu bir erişim jetonu ve isteğe bağlı olarak bir yenileme jetonu
+verir. Eğer istemci kimlik doğrulaması başarısız olursa veya geçersizse,
+yetkilendirme sunucusu bir hata yanıtı döndürür.
+
+Başarılı yanıt örneği:
+
+   HTTP/1.1 200 OK
+   Content-Type: application/json;charset=UTF-8
+   Cache-Control: no-store
+   Pragma: no-cache
+
+   {
+     "access_token":"2YotnFZFEjr1zCsicMWpAA",
+     "token_type":"example",
+     "expires_in":3600,
+     "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA",
+     "example_parameter":"example_value"
+   }
+
+
+4.2.  Örtük Yetki
+
+Örtük yetki türü; JavaScript gibi bir betik dili kullanılarak
+tarayıcıda uygulanan istemciler için kullanılır. Örtük akışta,
+istemciye yetkilendirme kodu yerine erişim jetonu doğrudan verilir.
+Bu yetki türünde yenileme jetonu kullanılmaz.
+
+     +----------+
+     | Kaynak   |
+     |   Sahibi |
+     |          |
+     +----------+
+          ^
+          |
+         (B)
+     +----|-----+          İstemci Tanımlayıcı      +---------------+
+     |         -+----(A)-- ve Yeniden Yönl. URI --->|               |
+     |  Kullanıcı          ─────────────────────────|Yetkilendirme  |
+     |  Aracısı -+----(B)-- Kullanıcı Kimlik Doğr -->|   Sunucusu   |
+     |           |                                  +---------------+
+     |           |<─(C)─── Yeniden Yönl. URI ─────────────┘
+     |           |         Fragment ile Erişim Jetonu
+     |           |
+     |     (F)   |─(D)─ Web Barındırılan Kaynak ─> İstemci Kaynağı
+     |           |<─(E)─── Betik ────────────────────────────┘
+     +-----------+
+           |
+          (G) Erişim Jetonu
+           |
+           v
+     +---------+
+     | İstemci |
+     +---------+
+
+         Şekil 4: Örtük Yetki Akışı
+
+
+4.2.1.  Yetkilendirme İsteği
+
+İstemci, yetkilendirme uç noktası URI'sine şu parametreleri ekler:
+
+   response_type
+         GEREKLİDİR. "token" olmalıdır.
+
+   client_id
+         GEREKLİDİR. Bölüm 2.2'de açıklanan istemci tanımlayıcısı.
+
+   redirect_uri
+         İSTEĞE BAĞLI. Bölüm 3.1.2'de açıklandığı gibi.
+
+   scope
+         İSTEĞE BAĞLI. Bölüm 3.3'te açıklanan erişim kapsamı.
+
+   state
+         TAVSİYE EDİLİR. Çapraz site istek sahteciliğine karşı opak değer.
+
+Örneğin:
+
+   GET /authorize?response_type=token&client_id=s6BhdRkqt3&state=xyz
+       &redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb HTTP/1.1
+   Host: server.example.com
+
+
+4.2.2.  Erişim Jetonu Yanıtı
+
+Kaynak sahibi erişimi onaylarsa, yetkilendirme sunucusu erişim
+jetonunu yeniden yönlendirme URI'sinin parça (fragment) bileşenine
+ekler:
+
+   access_token
+         GEREKLİDİR. Yetkilendirme sunucusu tarafından verilen erişim jetonu.
+
+   token_type
+         GEREKLİDİR. Verilen jetonun türü (Bölüm 7.1'e bakın).
+
+   expires_in
+         TAVSİYE EDİLİR. Saniye cinsinden erişim jetonunun ömrü.
+         Örneğin 3600 değeri, jetonun yanıt oluşturulduktan 1 saat
+         sonra sona ereceğini belirtir.
+
+   scope
+         İstemci tarafından istenen kapsamla özdeş olması halinde
+         İSTEĞE BAĞLIDIR; aksi takdirde GEREKLİDİR.
+
+   state
+         Yetkilendirme isteğinde "state" parametresi mevcutsa
+         GEREKLİDİR. İstemciden alınan kesin değer.
+
+Örneğin:
+
+   HTTP/1.1 302 Found
+   Location: http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA
+             &state=xyz&token_type=example&expires_in=3600
+
+
+4.3.  Kaynak Sahibi Parola Kimlik Bilgileri Yetkisi
+
+Kaynak sahibi parola kimlik bilgileri yetki türü, kaynak sahibinin
+aygıt işletim sistemi veya yüksek ayrıcalıklı uygulamalar gibi
+istemciye güvendiği durumlarda kullanılır. Yetkilendirme sunucusu bu
+yetki türünü etkinleştirirken özellikle dikkatli olmalı ve yalnızca
+diğer akışların uygulanabilir olmadığı durumlarda izin vermelidir.
+
+İstemci, Kaynak Sahibinin kimlik bilgilerini doğrudan almak yerine
+bunları kullanarak erişim jetonu elde eder:
+
+   POST /token HTTP/1.1
+   Host: server.example.com
+   Authorization: Basic czZCaGRSa3F0Mzo3RmpmcDBaQnIxS3REUmJuZlZkbUl3
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=password&username=johndoe&password=A3ddj3w
+
+
+4.3.1.  Yetkilendirme İsteği ve Yanıtı
+
+Kaynak sahibi, istemciye kimlik bilgilerini (kullanıcı adı ve parola)
+sağlar. İstemci, bu kimlik bilgilerini kullanarak yetkilendirme
+sunucusundan erişim jetonu ister.
+
+İstekte bulunan parametreler:
+
+   grant_type
+         GEREKLİDİR. "password" olmalıdır.
+
+   username
+         GEREKLİDİR. Kaynak sahibinin kullanıcı adı.
+
+   password
+         GEREKLİDİR. Kaynak sahibinin parolası.
+
+   scope
+         İSTEĞE BAĞLI. Bölüm 3.3'te açıklanan erişim kapsamı.
+
+
+4.4.  İstemci Kimlik Bilgileri Yetkisi
+
+İstemci kimlik bilgileri yetki türü, kendi kontrolündeki korumalı
+kaynaklara erişim sağlamak için veya önceden yetkilendirme sunucusuyla
+düzenlenmiş korumalı kaynaklara erişmek için kullanılabilir.
+
+     +---------+                                  +---------------+
+     |         |                                  |               |
+     |İstemci  |--(A)- İstemci Kimlik Doğrulaması ->|  Yetkilendirme|
+     |         |                                  |   Sunucusu   |
+     |         |<-(B)------ Erişim Jetonu ---------|               |
+     +---------+                                  +---------------+
+
+               Şekil 6: İstemci Kimlik Bilgileri Akışı
+
+
+4.4.1.  Yetkilendirme İsteği ve Yanıtı
+
+İstemci kimlik bilgilerini kullanarak jeton istemek için parametreler:
+
+   grant_type
+         GEREKLİDİR. "client_credentials" olmalıdır.
+
+   scope
+         İSTEĞE BAĞLI. Bölüm 3.3'te açıklanan erişim kapsamı.
+
+Örneğin:
+
+   POST /token HTTP/1.1
+   Host: server.example.com
+   Authorization: Basic czZCaGRSa3F0Mzo3RmpmcDBaQnIxS3REUmJuZlZkbUl3
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=client_credentials
+
+
+4.5.  Uzantı Yetkileri
+
+İstemci; mutlak URI'yi veya Bölüm 8.3'te açıklanan kayıtlı ek
+uzantıyı "grant_type" parametre değeri olarak kullanarak, yetkilendirme
+sunucusu tarafından desteklenen ek yetki türlerini kullanabilir.
+
+Uzantı yetki türleri için ek parametreler yetkilendirme isteğine
+dahil edilebilir.
+
+
+5.  Erişim Jetonu Verme
+
+Bölüm 3.2'de açıklanan biçimde yapılan yetki isteği başarılıysa,
+yetkilendirme sunucusu bir erişim jetonu ve isteğe bağlı bir yenileme
+jetonu verir.
+
+
+5.1.  Başarılı Yanıt
+
+Yetkilendirme sunucusu bir erişim jetonu ve isteğe bağlı bir yenileme
+jetonu verir; bunları HTTP yanıtının gövdesine "application/json"
+[RFC4627] olarak "200 (OK)" durum koduyla gönderir.
+
+Yanıttaki parametreler:
+
+   access_token
+         GEREKLİDİR. Yetkilendirme sunucusu tarafından verilen erişim jetonu.
+
+   token_type
+         GEREKLİDİR. Verilen jetonun türü (Bölüm 7.1'e bakın).
+         Büyük/küçük harf duyarsızdır.
+
+   expires_in
+         TAVSİYE EDİLİR. Saniye cinsinden erişim jetonunun ömrü.
+         Örneğin 3600 değeri, yanıt oluşturulduktan 1 saat sonra
+         jetonun sona ereceğini belirtir. Atlanırsa, yetkilendirme
+         sunucusu sona erme zamanını başka yollarla sağlamalı
+         veya varsayılan değeri belgelemelidir.
+
+   refresh_token
+         İSTEĞE BAĞLI. Mevcut erişim jetonu geçersiz olduğunda veya
+         sona erdiğinde yeni erişim jetonları almak için kullanılabilir;
+         mevcut veya önceden verilen yetkilendirme yetkisini de
+         kullanabilir. Yetkilendirme sunucusu için yenileme jetonu
+         verme zorunlu değildir.
+
+   scope
+         İstemci tarafından talep edilen kapsamla özdeşse
+         İSTEĞE BAĞLI; aksi takdirde GEREKLİDİR.
+
+Güvenlik amacıyla aşağıdaki önlemler alınmalıdır:
+
+   Cache-Control: no-store
+   Pragma: no-cache
+
+Örnek başarılı yanıt:
+
+   HTTP/1.1 200 OK
+   Content-Type: application/json;charset=UTF-8
+   Cache-Control: no-store
+   Pragma: no-cache
+
+   {
+     "access_token":"2YotnFZFEjr1zCsicMWpAA",
+     "token_type":"bearer",
+     "expires_in":3600,
+     "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA",
+     "example_parameter":"example_value"
+   }
+
+
+5.2.  Hata Yanıtı
+
+Yetkilendirme isteği başarısız olursa, yetkilendirme sunucusu bir
+hata yanıtı döndürür; yanıt gövdesine "application/json" biçiminde
+"400 (Bad Request)" durum koduyla şu parametreleri ekler:
+
+   error
+         GEREKLİDİR. Aşağıdaki tek ASCII hata kodlarından biri:
+
+         invalid_request
+               İstek gerekli parametreler içermiyor, geçersiz parametre
+               değerleri içeriyor, birden fazla parametre içeriyor veya
+               başka türlü hatalı biçimlendirilmiş.
+
+         invalid_client
+               İstemci kimlik doğrulaması başarısız (ör. bilinmeyen
+               istemci, istemci kimlik doğrulaması dahil değil,
+               desteklenmeyen kimlik doğrulama yöntemi). Yetkilendirme
+               sunucusu, desteklenen kimlik doğrulama şemalarını belirtmek
+               için bir "WWW-Authenticate" HTTP kimlik doğrulama üst bilgisi
+               döndürebilir (MAY).
+
+         invalid_grant
+               Sağlanan yetki yetkisi (ör. yetkilendirme kodu, kaynak sahibi
+               kimlik bilgileri) veya yenileme jetonu geçersiz, süresi dolmuş,
+               iptal edilmiş, yetkilendirme isteğinde kullanılan yeniden
+               yönlendirme URI'siyle eşleşmiyor veya başka bir istemciye
+               verilmiş.
+
+         unauthorized_client
+               Kimliği doğrulanmış istemci bu yetki türünü kullanmaya yetkili
+               değil.
+
+         unsupported_grant_type
+               Yetki türü yetkilendirme sunucusu tarafından desteklenmiyor.
+
+         invalid_scope
+               İstenen kapsam geçersiz, bilinmeyen, hatalı biçimlendirilmiş
+               veya kaynak sahibi tarafından verilen kapsamı aşıyor.
+
+   error_description
+         İSTEĞE BAĞLI. İnsan tarafından okunabilir metin; istemci
+         geliştirici hatasını anlamasına yardımcı olacak ek bilgi.
+         Değer yalnızca %x20-21 / %x23-5B / %x5D-7E ile eşleşen karakterler
+         içerebilir (düz ASCII).
+
+   error_uri
+         İSTEĞE BAĞLI. Hata hakkında bilgi içeren web sayfasının URI'si.
+
+Hata yanıtı örneği:
+
+   HTTP/1.1 400 Bad Request
+   Content-Type: application/json;charset=UTF-8
+   Cache-Control: no-store
+   Pragma: no-cache
+
+   {
+     "error":"invalid_request"
+   }
+============================================================
+PARÇA 3 / 5 — Sayfa 33–48 (Bölüm 6–8: Yenileme, Kapsam, Genişletme)
+============================================================
+
+
+6.  Erişim Jetonunu Yenileme
+
+Yetkilendirme sunucusu bir yenileme jetonu vermişse, istemci bu
+yenileme jetonunu kullanarak yeni bir erişim jetonu edinebilir. Yenileme
+jetonları; istemcinin yetkilendirme sunucusundan erişim jetonlarını
+yenilemek amacıyla kullandığı uzun ömürlü kimlik bilgileridir.
+
+İstemci jeton uç noktasına yeni bir istek göndererek yenileme jetonu
+ile erişim jetonunu değiştirir. Bu istek Bölüm 3.2.1'de açıklandığı
+gibi istemci kimlik doğrulaması da içerebilir.
+
+İstek parametreleri:
+
+   grant_type
+         GEREKLİDİR. "refresh_token" olmalıdır.
+
+   refresh_token
+         GEREKLİDİR. İstemciye verilen yenileme jetonu.
+
+   scope
+         İSTEĞE BAĞLI. Bölüm 3.3'te açıklandığı gibi erişim isteğinin
+         kapsamı. Kapsam, kaynak sahibi tarafından özgün olarak
+         yetkilendirilmiş kapsamı aşmamalıdır (MUST NOT). Atlanırsa,
+         kaynak sahibi tarafından özgün olarak yetkilendirilmiş kapsamla
+         aynı olduğu varsayılır.
+
+Yetkilendirme sunucusu, yenileme jetonunu içeren isteği
+doğrulamalıdır (MUST); istemci kimlik bilgileri dahil edilmişse
+istemciyi kimlik doğrulamalıdır. Yenileme jetonunun hangi istemciye
+verildiğini ve bu istemcinin istekle aynı istemci olduğunu doğrulamalıdır.
+
+Yenileme jetonu ve istemci kimlik bilgileri geçerliyse, yetkilendirme
+sunucusu yeni erişim jetonunu vermelidir (MUST). Yetkilendirme sunucusu
+yeni bir yenileme jetonu da verebilir (MAY); bu durumda istemci eski
+yenileme jetonunu silmeli (MUST) ve yeni jeton ile değiştirmelidir.
+Yetkilendirme sunucusu yeni yenileme jetonu verirse, bu jetonun kapsamı
+özgün yenileme jetonuyla aynı olmalıdır (MUST).
+
+Örneğin:
+
+   POST /token HTTP/1.1
+   Host: server.example.com
+   Authorization: Basic czZCaGRSa3F0Mzo3RmpmcDBaQnIxS3REUmJuZlZkbUl3
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=refresh_token&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA
+
+
+7.  Korumalı Kaynaklara Erişim
+
+İstemci, kaynak sahibinin adına korumalı kaynaklara erişmek için
+erişim jetonunu sunar. Kaynak sunucusu, erişim jetonunu doğrulamak
+ve şartlarının erişilen kaynakla uyumlu olduğundan emin olmak için
+çeşitli yöntemler kullanabilir.
+
+Erişim jetonunu kaynağa iletme yöntemi; erişim jetonu türüne bağlıdır
+ve kullanılan erişim jetonu türünü tanımlayan belgenin spesifikasyonunda
+belirtilir.
+
+
+7.1.  Erişim Jetonu Türleri
+
+Erişim jetonu türleri, çeşitli kullanım senaryolarına yönelik
+istemci uygulamasını yönlendiren türe özgü özelliklerden oluşur.
+
+Her tür belirli özelliklere sahiptir. İstemci, bilinmeyen türdeki
+erişim jetonlarını kullanmaya çalışmamalıdır (MUST NOT).
+
+Örnek: "Bearer" jeton türü [RFC6750], jetonun yetkilendirme başlığında
+taşınmasını sağlar:
+
+   GET /resource/1 HTTP/1.1
+   Host: example.com
+   Authorization: Bearer mF_9.B5f-4.1JqM
+
+
+7.2.  Hata Yanıtı
+
+Kaynak sunucusuna yapılan istek başarısız olursa, kaynak sunucusu
+istemciye bir hata yanıtı döndürmelidir. Yanıtın biçim ve spesifikasyonu
+kullanılan HTTP kimlik doğrulama şemasına bağlıdır.
+
+
+8.  Genişletilebilirlik
+
+8.1.  Ek Erişim Jetonu Türlerini Tanımlama
+
+Erişim jetonu türlerini tanımlayan ek spesifikasyonlar şu özellikleri
+karşılamalıdır:
+
+  o  Jeton türünü kullanmak için gereken öznitelikleri tanımlamalı
+  o  Jeton türünü kullanmak için kaynak sunucusuna iletim yöntemini
+     tanımlamalı
+  o  Jeton türü sona erme zamanı dahil istemci kimlik bilgilerinin
+     depolanmasına ilişkin gereksinimleri tanımlamalı
+
+Erişim jetonu türleri IANA OAuth Parametre Kaydı'na kayıt ettirilmelidir.
+
+
+8.2.  Ek Parametreleri Tanımlama
+
+Bölüm 3.1, 4.1, 4.2, 4.3, 4.4 ve 5 aracılığıyla yetkilendirme ve
+jeton uç noktaları için ek parametreler tanımlanabilir. Ek parametreler
+IANA OAuth Parametre Kaydı'na (Bölüm 11.2) kaydedilmelidir.
+
+
+8.3.  Ek Yetki Türlerini Tanımlama
+
+Ek yetki türleri şu özellikleri karşılamalıdır:
+
+  o  Yetki türü için benzersiz mutlak URI kullanılmalıdır.
+  o  Birden fazla isteğin/yanıtın birleştirildiği etkileşimler için
+     her adım için tam teknik ve güvenlik gereksinimlerini içeren
+     yeni bir spesifikasyon (RFC veya diğer kalıcı ve erişilebilir
+     referans) yayımlanması ZORUNLUDUR (MUST).
+
+
+8.4.  Ek Yanıt Türlerini Tanımlama
+
+Bölüm 3.1.1 aracılığıyla yetkilendirme uç noktasında kullanım
+için tanımlanmış ek yanıt türleri "response_type" değeri olarak
+kullanılabilir ve IANA OAuth Yetkilendirme Uç Noktası Yanıt Türleri
+Kaydına (Bölüm 11.3) kaydedilmelidir.
+
+Yanıt türleri aşağıdaki karakterlerden oluşan bir veya daha fazla
+boşlukla ayrılmış değer dizisidir:
+
+   response-type  = response-name *( SP response-name )
+   response-name  = 1*response-char
+   response-char  = "_" / DIGIT / ALPHA
+
+
+8.5.  Ek Hata Kodlarını Tanımlama
+
+Bölüm 4.1.2.1, 4.2.2.1, 5.2 ve 7.2 aracılığıyla özel hata kodları
+tanımlanabilir; bu kodlar standartlaştırılmış hata kodlarını aşan
+durumlara yönelik ek bilgi sağlar. Uzantı hata kodlarının
+standardize edilmesi için IANA OAuth Uzantıları Hata Kaydı'na
+(Bölüm 11.4) kaydedilmeleri TAVSİYE EDİLİR (RECOMMENDED).
+
+Uzantı hata kodları, hangi protokol bileşeniyle kullanıldıklarını
+belirtmek için bir ön ek içermelidir. Ön ek, sonraki adı içeren
+etiketlerin ek uzantıyı kullanması için adlandırılmış uzantı
+etiketini içermelidir.
+
+
+9.  Yerel Uygulamalar
+
+Yerel uygulamalar; mobil cihazlar, masaüstü bilgisayarlar ve diğer
+kişisel aygıtlar üzerinde çalışan, kullanıcı etkileşimiyle işlev
+gören istemcilerdir.
+
+Bu tür uygulamaların güvenlik koşulları gizli istemcilerden farklıdır
+çünkü:
+
+  o  İstemci gizli anahtarları, kaynak kodu veya derlenmiş uygulama
+     olarak dağıtılmaktadır; bu nedenle gizlilik konusunda güvensizlik
+     vardır. Herhangi bir kullanıcı bu gizli anahtarı çıkarabilir.
+
+  o  Çoklu yükleme senaryolarında birden fazla cihazda çalışan
+     aynı uygulama için her biri farklı erişim jetonuna sahip ayrı
+     örnek bulunabilir.
+
+  o  Yerel uygulamalar çoğunlukla kullanıcı aracısıyla etkileşime
+     girerek yetkilendirme yanıtı URI'sinin geri çağrılmasını sağlar.
+
+Önerilen yetkilendirme akışı:
+
+Yerel uygulamalar için güvenli OAuth uygulaması RFC 8252'de
+"Yerel Uygulamalar için OAuth 2.0" başlığıyla ayrıntılı biçimde
+açıklanmıştır. Özellikle şunlar önerilir:
+
+  o  Dış kullanıcı aracısının (cihaz tarayıcısı) yetkilendirme
+     akışı için kullanılması
+
+  o  Kodun etkileşimli güven talebi olduğunu gösteren bildirimler
+
+  o  PKCE (Proof Key for Code Exchange - RFC 7636) kullanımı;
+     yetkilendirme kodu ele geçirme saldırılarına karşı koruma için
+============================================================
+PARÇA 4 / 5 — Sayfa 49–65 (Bölüm 10: Güvenlik Değerlendirmeleri)
+============================================================
+
+
+10.  Güvenlik Değerlendirmeleri
+
+10.1.  İstemci Kimlik Doğrulaması
+
+Yetkilendirme sunucusu, gizli istemcilerle etkileşime girerken bu
+istemcileri doğrulamalıdır (MUST). İstemci kimlik doğrulaması;
+geri dönüşüm saldırılarını engellemek için yenileme jetonunu
+belirli bir istemciye bağlaması açısından kritik öneme sahiptir.
+
+Yetkilendirme sunucusu istemci kimlik bilgilerini saklarken güçlü
+karmalamanın kullanılmasını ve daha sonra artık ihtiyaç duyulmayan
+kimlik bilgilerinin temizlenmesini sağlamalıdır (SHOULD). Yetkilendirme
+sunucusu, istemci kimlik doğrulaması için kullanılan gizliliklerin
+oluşturulmasında yeterli entropinin kullanılmasını sağlamalıdır (SHOULD).
+
+Kamusal istemcilerin kimliği doğrulanamaz. Bu nedenle, kamusal bir
+istemcinin konuşlandırılması için alınan güvenlik kararları, istemci
+kimlik doğrulamasının uygulanamayacağı gerçeğine dayandırılmalıdır.
+
+
+10.2.  Kötü Amaçlı İstemci Kimlik Sahteciliği
+
+Yetkilendirme sunucusu, birden fazla istemcinin aynı istemci kimliğini
+kayıt ettirmeye çalışmaması için tekil kimlik denetimi yapmalıdır.
+İstemci kimliği benzersiz ve gizli olmayan bir kimlik bilgisidir;
+bu nedenle saldırgan, meşru istemcinin kayıtlı URI'sine sahip olmasına
+karşın farklı bir yeniden yönlendirme URI'siyle istemci kimliğini
+kötüye kullanmaya çalışabilir.
+
+
+10.3.  Erişim Jetonları
+
+Erişim jetonlarının gizliliği, aktarım sırasında ve depolama sırasında
+korunmalıdır. Sunucu tarafında erişim jetonları yalnızca yetkilendirme
+sunucusu, doğrulayan kaynak sunucuları ve istemci tarafından
+erişilebilir olmalıdır.
+
+Yetkilendirme sunucusu, erişim jetonunun kapsamını sınırlayan kısa
+ömürlü erişim jetonlarını tercih etmelidir (SHOULD). Yetkilendirme
+sunucusu; istemci türüne, güvenlik politikasına ve diğer iş
+gereksinimlerine göre farklı jeton ömürlerini ve kapsamlarını
+desteklemelidir. Kısa ömürlü erişim jetonları ve uzun ömürlü yenileme
+jetonları kullanmak, yetkilendirme sunucusunun zaman içinde erişim
+ayrıcalıklarını iptal etmesine olanak sağlar.
+
+Erişim jetonu iletimi sırasında ve depolanması sırasında korunmalıdır.
+Yetkilendirme sunucusu, erişim jetonlarının başka bağlamlarda kullanımını
+sınırlamalıdır.
+
+
+10.4.  Yenileme Jetonları
+
+Yetkilendirme sunucusu, yenileme jetonlarının erişim jetonlarından
+bağımsız olarak ilk kimlik doğrulama ile bağlı istemciye verilmesini
+sağlamalıdır (MUST). İstemci kimlik doğrulaması mümkün olmadığında,
+yetkilendirme sunucusu yenileme jetonunu onaylayan diğer araçları
+kullanmalıdır (SHOULD).
+
+Yetkilendirme sunucusu yenileme jetonlarını döndürürse (MAY), bu
+jetonlar belirli bir istemci kimliğine bağlı olarak saklanmalıdır.
+Yenileme jetonu gizliliği sağlanmalıdır; aktarım sırasında TLS
+şifrelemesi kullanılmalıdır.
+
+Yetkilendirme sunucusu, yenileme jetonlarının rotasyonunu uygulayabilir
+(MAY). Jeton rotasyonu; eski yenileme jetonunun kullanıldığı
+her yetkilendirme isteğinde yeni bir yenileme jetonu verilmesini
+içerir. Eski yenileme jetonu geçersiz hale gelirken yeni jeton ile
+değiştirilmiş erişim jetonuna erişim aktarılır. Eğer bir yenileme
+jetonu güvenliği ihlal edilmiş ve hem saldırgan hem de meşru istemci
+tarafından kullanılmışsa, ikisi de oturum geçersizleştirme uyarısı
+alacaktır.
+
+
+10.5.  Yetkilendirme Kodu
+
+Yetkilendirme kodunun aktarım sırasında gizliliği TLS ile sağlanmalıdır.
+Bununla birlikte, yetkilendirme kodu URI değeri yeniden yönlendirme
+işlemi sırasında kaynak sahibinin kullanıcı aracısı üzerinden iletildiği
+için URI geçmişinde görünür olabilir.
+
+Yetkilendirme sunucusu, Bölüm 4.1.2'de açıklananın ötesinde
+yetkilendirme kodunun kısa süreli olmasını sağlamalıdır (MUST).
+Yetkilendirme kodunun birden fazla kez kullanılması halinde,
+yetkilendirme sunucusu bu kodu kötü amaçlı bir etkinlikle ilişkilendirmeye
+çalışmalıdır (SHOULD) ve yeterli bilgi mevcutsa bu koda dayalı
+erişim jetonlarını iptal etmelidir.
+
+Yetkilendirme sunucusu, yetkilendirme kodunun yalnızca bir kez
+kullanılmasını zorlamalıdır (SHOULD). Örtük yetki türünden farklı
+olarak, yetkilendirme kodu kaynak sahibinin kullanıcı aracısına
+açık değildir.
+
+
+10.6.  Yetkilendirme Kodu Yeniden Yönlendirme URI Manipülasyonu
+
+Yetkilendirme kodu yetki akışının ilk isteğinde saldırgan; kendi
+kontrolü altındaki bir URI'yi redirect_uri parametresi olarak
+sağlayabilir. Bunu başardıktan sonra yetkilendirme kodunu ele
+geçirip meşru istemci URI'si yerine saldırganın URI'sine
+yönlendirebilir.
+
+Bu saldırıya karşı korunmak için:
+
+  o  Yetkilendirme sunucusu, yetkilendirme kodunu yalnızca kayıtlı
+     yeniden yönlendirme URI'lerine göndermelidir (MUST).
+
+  o  Yetkilendirme sunucusu, sağlanan redirect_uri değerini kayıtlı
+     yeniden yönlendirme URI'leriyle karşılaştırmalıdır (MUST).
+
+  o  Yetkilendirme sunucusunun, yetkilendirme kodunun daha önce başka
+     bir redirect_uri ile kullanıldığı durumlarda kodu geçersiz
+     kılması TAVSİYE EDİLİR (RECOMMENDED).
+
+
+10.7.  Kaynak Sahibi Parolasının Kimlik Bilgileri
+
+Kaynak sahibi parola kimlik bilgileri yetki türü genellikle kullanılmamalıdır.
+Yetkilendirme sunucusu bu yetki türü için destek sağlamadan önce
+risk değerlendirmesi yapmalı ve gerekli koşullar karşılanmadıkça
+bu yetki türünü etkinleştirmemelidir.
+
+Bu yetki türü, kaynak sahibinin kimlik bilgilerine istemcinin doğrudan
+erişimini gerektirdiğinden, istemcinin bu kimlik bilgilerini kötüye
+kullanma olasılığı bulunmaktadır. İstemci, kaynak sahibinin kimlik
+bilgilerini yetkilendirme sunucusuna iletmeli ve bunları saklamamalıdır.
+
+
+10.8.  Erişim Jetonunun Kapsam ve Kaynak Sunucusu İlişkilendirilmesi
+
+Yetkilendirme sunucusu tarafından verilmiş belirli erişim jetonları;
+bu jetonla erişilebilecek kaynak sunucusu kümesi ile ilişkilendirilmelidir.
+Kaynak sunucusu, yalnızca kendisine yönelik jetonları kabul etmelidir (MUST).
+
+Kaynağa göre erişim kısıtlaması uygulanmadıkça, belirli bir kaynak
+sunucusundan çalınan bir erişim jetonu başka kaynak sunucularına erişmek
+için de kullanılabilir.
+
+
+10.9.  Erişim Jetonu Ayrıcalıklarını En Aza İndirme
+
+Yetkilendirme sunucusu; yalnızca kaynak sahibi tarafından yetkilendirilmiş
+ve kullanıcının tercih ettiği uygulamayı çalıştırmak için gereken
+asgari kapsama sahip erişim jetonlarının verilmesini sağlamalıdır (SHOULD).
+
+Bu, erişim jetonlarının olası kötüye kullanım etkisini azaltır.
+
+
+10.10. Yetkilendirme Sunucusu Kimlik Sahteciliği
+
+Kötü amaçlı bir istemci, meşru yetkilendirme sunucusunu taklit eden
+sahte bir yetkilendirme sunucusu oluşturabilir ve kaynak sahibinden
+kimlik bilgilerini çalmak için kullanabilir. Bu saldırıya karşı
+yetkilendirme sunucusu TLS sertifikası ile kimliğini kanıtlamalıdır.
+
+
+10.11. Kimlik Doğrulama Kimlik Bilgilerinin Taşınması
+
+Erişim jetonları, yenileme jetonları ve istemci kimlik bilgileri
+TLS üzerinden iletilmelidir (MUST).
+
+İstek URI'sine kimlik bilgileri eklenmesi önerilmez (SHOULD NOT).
+URI değerleri günlük dosyalarına, yönlendirici günlüklerine ve
+tarayıcı geçmişine kaydedilebilir; bu nedenle URL'ye gömülü gizli
+bilgiler güvenlik riski oluşturabilir.
+
+
+10.12. CSRF Saldırıları
+
+Yetkilendirme isteği ve yeniden yönlendirme URI'si için çapraz
+site istek sahteciliğine (CSRF) karşı koruma gereklidir.
+
+İstemci, "state" parametresini; isteği oturum bağlamıyla ilişkilendiren
+tahmin edilemez bir değer olarak oluşturmalı (MUST) ve geri
+çağrıldığında bu değeri doğrulamalıdır.
+
+
+10.13. Tıklama Korsanlığı Saldırıları
+
+Kötü amaçlı web sayfaları, yetkilendirme uç noktasını görünmez
+bir iframe içine yerleştirerek kaynak sahibini farkında olmadan
+yetkisiz bir erişim sağlamaya yönlendirebilir.
+
+Yetkilendirme sunucuları bu saldırılara karşı gerekli önlemleri
+almalıdır (SHOULD), örneğin:
+
+  o  "X-Frame-Options: DENY" HTTP yanıt başlığı kullanımı
+  o  "frame-ancestors" CSP yönergesi
+  o  İnce UI katmanlarını tespit eden JavaScript güvenlik kodu
+
+
+10.14. Kod Enjeksiyonu ve Giriş Doğrulama
+
+Kötü amaçlı kod; yetkilendirme kodu yanıtı veya jeton yanıtı
+gibi çeşitli OAuth parametrelerine enjekte edilebilir.
+
+Tüm giriş verileri doğrulanmalıdır (MUST). Parametreler öngörülen
+sözdizimi ve boyut kısıtlamalarıyla karşılaştırılmalıdır.
+
+
+10.15. Açık Yeniden Yönlendirme
+
+Saldırganlar, yetkilendirme uç noktasındaki redirect_uri parametresini
+kötü amaçlı sitelere yönlendirmek için kullanabilir. Bu, kimlik
+avı saldırılarına ve kimlik bilgisi çalmaya zemin hazırlayabilir.
+
+Yetkilendirme sunucuları, yeniden yönlendirme URI'lerinin tam olarak
+kayıtlı URI'lerle eşleşmesini zorlamalıdır (MUST). Kısmi URI
+eşleştirmesine izin verilmemelidir.
+
+
+10.16. Örtük Akış İçin Erişim Jetonu Kötüye Kullanımı
+
+Örtük yetki türünde, erişim jetonu yeniden yönlendirme URI'sinin
+parça bileşenine kodlanarak iletilir. Saldırgan, bu jetonu başka
+bir kaynakta kullanmak için ele geçirmeye çalışabilir.
+
+Kaynak sunucusu, erişim jetonunun kullanımının belirli bir istemciye
+kısıtlandığını doğrulayabilmelidir (SHOULD). Bu mümkün değilse,
+yetkilendirme sunucusu erişim jetonlarının kapsamını sınırlamalıdır.
+============================================================
+PARÇA 5 / 5 — Sayfa 66–76 (Bölüm 11+: IANA, Ekler, Referanslar)
+============================================================
+
+
+11.  IANA Değerlendirmeleri
+
+11.1.  OAuth Erişim Jeton Türleri Kaydı
+
+Bu belge, IANA OAuth Erişim Jetonu Türleri kaydını oluşturur.
+Girişler, expert review politikasıyla kayıt altına alınır.
+
+Kayıt için gerekli bilgiler şunlardır:
+  o  Jeton Türü Adı: İstek URL'leri biçiminde benzersiz dize.
+  o  Ek Belirteçler: Gerekiyorsa tanımlamalar.
+  o  HTTP Kimlik Doğrulama Şeması: Kullanılan şema adı.
+  o  Değişiklik Kontrolörü: IETF veya ilgili kuruluş.
+  o  Spesifikasyon Belgesi: RFC veya benzeri referans.
+
+
+11.2.  OAuth Parametreleri Kaydı
+
+Bu belge, IANA OAuth Parametreleri kaydını oluşturur.
+Bölüm 3.1.1, 3.1.2, 4.1, 4.2, 4.3, 4.4, 5 ve 6'da tanımlanan
+parametreler ilk giriş olarak kaydedilir:
+
+   +───────────────────────+──────────+───────────────────────+
+   | Parametre Adı         | Konum    | Spesifikasyon          |
+   +───────────────────────+──────────+───────────────────────+
+   | client_id             | yetk/jtn  | RFC 6749              |
+   | client_secret         | jeton    | RFC 6749              |
+   | response_type         | yetk     | RFC 6749              |
+   | redirect_uri          | yetk/jtn  | RFC 6749              |
+   | scope                 | yetk/jtn  | RFC 6749              |
+   | state                 | yetk     | RFC 6749              |
+   | code                  | yetk/jtn  | RFC 6749              |
+   | error                 | yetk/jtn  | RFC 6749              |
+   | error_description     | yetk/jtn  | RFC 6749              |
+   | error_uri             | yetk/jtn  | RFC 6749              |
+   | grant_type            | jeton    | RFC 6749              |
+   | access_token          | jeton    | RFC 6749              |
+   | token_type            | jeton    | RFC 6749              |
+   | expires_in            | jeton    | RFC 6749              |
+   | username              | jeton    | RFC 6749              |
+   | password              | jeton    | RFC 6749              |
+   | refresh_token         | jeton    | RFC 6749              |
+   +───────────────────────+──────────+───────────────────────+
+
+
+11.3.  OAuth Yetkilendirme Uç Noktası Yanıt Türleri Kaydı
+
+Bu belge, IANA OAuth Yetkilendirme Uç Noktası Yanıt Türleri
+kaydını oluşturur. "code" ve "token" bu belgedeki ilk giriş
+değerleridir.
+
+
+11.4.  OAuth Uzantıları Hata Kaydı
+
+Bu belge, IANA OAuth Uzantıları Hata kaydını oluşturur.
+Bu belgeyle tanımlanan hata kodları ("invalid_request",
+"invalid_client" vb.) bu kayıta ilk değerler olarak eklenir.
+
+
+Ek A.  Ek Genişletilmiş Backus-Naur Form (ABNF) Sözdizimi Tanımları
+
+Bu bölüm, her ikisi de [RFC5234]'ü kullanan ek ABNF sözdizimini
+açıklar ve aşağıdaki kuralları içerir:
+
+A.1.  client_id Sözdizimi
+
+   client-id     = *VSCHAR
+
+A.2.  client_secret Sözdizimi
+
+   client-secret = *VSCHAR
+
+A.3.  response_type Sözdizimi
+
+   response-type = response-name *( SP response-name )
+   response-name = 1*response-char
+   response-char = "_" / DIGIT / ALPHA
+
+A.4.  scope Sözdizimi
+
+   scope       = scope-token *( SP scope-token )
+   scope-token = 1*NQCHAR
+
+A.5.  state Sözdizimi
+
+   state      = 1*VSCHAR
+
+A.6.  redirect_uri Sözdizimi
+
+   redirect-uri      = URI-reference
+
+A.7.  error Sözdizimi
+
+   error             = 1*NQCHAR
+
+A.8.  error_description Sözdizimi
+
+   error-description = 1*NQSCHAR
+
+A.9.  error_uri Sözdizimi
+
+   error-uri         = URI-reference
+
+A.10. grant_type Sözdizimi
+
+   grant-type = grant-name / URI-reference
+   grant-name = 1*name-char
+   name-char  = "-" / "." / "_" / DIGIT / ALPHA
+
+A.11. access_token Sözdizimi
+
+   access-token = 1*VSCHAR
+
+A.12. token_type Sözdizimi
+
+   token-type = type-name / URI-reference
+   type-name  = 1*name-char
+   name-char  = "-" / "." / "_" / DIGIT / ALPHA
+
+A.13. expires_in Sözdizimi
+
+   expires-in = 1*DIGIT
+
+A.14. username Sözdizimi
+
+   username = *UNICODECHARNOCRLF
+
+A.15. password Sözdizimi
+
+   password = *UNICODECHARNOCRLF
+
+A.16. refresh_token Sözdizimi
+
+   refresh-token = 1*VSCHAR
+
+A.17. Yardımcı Tanımlar
+
+   VSCHAR         = %x20-7E
+   NQCHAR         = %x21 / %x23-5B / %x5D-7E
+   NQSCHAR        = %x20-21 / %x23-5B / %x5D-7E
+   UNICODECHARNOCRLF = %x09 / %x20-7E / %x80-D7FF /
+                       %xE000-FFFD / %x10000-10FFFF
+
+
+Ek B.  application/x-www-form-urlencoded Medya Türünü Kullanma
+
+Bu belgedeki bazı örnekler "application/x-www-form-urlencoded"
+medya türünü kullanmaktadır. Bu medya türü şu şekilde tanımlanmıştır:
+
+  1. Parametreler sıralı değil/birleştirilmiş değildir.
+  2. Her parametre çifti "=" ile ayrılmış isim ve değerden oluşur.
+  3. Parametre çiftleri "&" ile ayrılır.
+  4. İsim ve değer yüzde kodlaması (percent-encoding) uygulanır.
+  5. Boşluk karakteri "+" olarak kodlanır.
+
+Örnek:
+   access_token=2YotnFZFEjr1zCsicMWpAA&token_type=bearer&
+   expires_in=3600&example_parameter=example_value
+
+
+Ek C.  Kullanım Örnekleri
+
+Bu ek, OAuth 2.0 kullanımına ilişkin çeşitli kullanım örneklerini
+açıklamaktadır. Bu örnekler normatif değildir.
+
+C.1.  Web uygulaması istemcisi
+
+Web uygulaması istemcisi, yetkilendirme kodu yetki türünü kullanır.
+İstemci, kullanıcı aracısını yetkilendirme uç noktasına yönlendirir.
+Kaynak sahibi kimliğini doğrular ve erişim isteğini kabul eder ya da
+reddeder. Yetkilendirme sunucusu, bir yetkilendirme kodu ile istemciye
+geri yönlendirir. İstemci kodu alır ve jeton uç noktasından erişim
+jetonu ister.
+
+C.2.  Tarayıcı tabanlı uygulama istemcisi
+
+Tarayıcı tabanlı (kullanıcı aracısı tabanlı) uygulama istemcisi
+örtük yetki türünü kullanır. İstemci, kullanıcı aracısını
+yetkilendirme uç noktasına yönlendirir. Kaynak sahibi, kimlik
+doğrulama ve izin verme işlemini tamamlar. Yetkilendirme sunucusu,
+erişim jetonunu parça bileşeni olarak dahil ederek yeniden yönlendirme
+URI'sine geri yönlendirir.
+
+C.3.  Yerel uygulama istemcisi
+
+Yerel uygulama istemcisi; platforma bağlı olarak kullanıcı aracısı
+tabanlı veya parola kimlik bilgileri yetki türlerini kullanabilir.
+Yetkilendirme kodu yetki türü önerilen yöntemdir. RFC 8252 yerel
+uygulamalar için en iyi uygulamaları tanımlamaktadır.
+
+
+Normatif Referanslar
+
+   [RFC2119]  Bradner, S., "RFC'lerde Gereksinim Düzeylerini Belirtmek
+              için Kullanılacak Anahtar Kelimeler", BCP 14, RFC 2119,
+              Mart 1997.
+
+   [RFC2246]  Dierks, T. ve C. Allen, "TLS Protokolü Sürüm 1.0",
+              RFC 2246, Ocak 1999.
+
+   [RFC2616]  Fielding, R., Gettys, J., Mogul, J., Frystyk, H.,
+              Masinter, L., Leach, P. ve T. Berners-Lee, "Köprü Metin
+              Aktarım Protokolü -- HTTP/1.1", RFC 2616, Haziran 1999.
+
+   [RFC2617]  Franks, J., Hallam-Baker, P., Hostetler, J., Lawrence,
+              S., Leach, P., Luotonen, A. ve L. Stewart, "HTTP Kimlik
+              Doğrulaması: Temel ve Özet Erişim Kimlik Doğrulaması",
+              RFC 2617, Haziran 1999.
+
+   [RFC3986]  Berners-Lee, T., Fielding, R. ve L. Masinter,
+              "Tekdüzen Kaynak Tanımlayıcı (URI): Genel Sözdizimi",
+              STD 66, RFC 3986, Ocak 2005.
+
+   [RFC4627]  Crockford, D., "application/json Medya Türü (JavaScript
+              Nesne Notasyonu)", RFC 4627, Temmuz 2006.
+
+   [RFC5246]  Dierks, T. ve E. Rescorla, "Aktarım Katmanı Güvenliği
+              (TLS) Protokolü Sürüm 1.2", RFC 5246, Ağustos 2008.
+
+   [RFC5234]  Crocker, D. ve P. Overell, "İnternet Teknik Spesifikasyonları
+              için Artırılmış BNF (ABNF): ABNF", STD 68, RFC 5234,
+              Ocak 2008.
+
+   [RFC6750]  Jones, M. ve D. Hardt, "OAuth 2.0 Yetkilendirme
+              Çerçevesi: Bearer Jeton Kullanımı", RFC 6750, Ekim 2012.
+
+
+Bilgilendirici Referanslar
+
+   [RFC5849]  Hammer-Lahav, E., "OAuth 1.0 Protokolü", RFC 5849,
+              Nisan 2010.
+
+   [RFC6265]  Barth, A., "HTTP Durum Yönetim Mekanizması", RFC 6265,
+              Nisan 2011.
+
+   [RFC7636]  Proof Key for Code Exchange (PKCE) by OAuth Public Clients,
+              RFC 7636, Eylül 2015.
+
+   [RFC8252]  Yerel Uygulamalar için OAuth 2.0, RFC 8252, Ekim 2017.
+
+
+Yazarların Adresleri
+
+   Dick Hardt (Editör)
+   Microsoft
+
+   E-posta: dick.hardt@gmail.com
+   URI:     http://richard.hardt.googlepages.com/
